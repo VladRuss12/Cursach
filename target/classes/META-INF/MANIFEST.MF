@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Implementation-Title: lab4
+Implementation-Version: 0.0.1-SNAPSHOT
+Built-By: 22565
+Implementation-Vendor-Id: by.vstu.zamok
+Build-Jdk: 1.8.0_60
+Implementation-URL: https://projects.spring.io/spring-boot/#/spring-bo
+ ot-starter-parent/lab4
+Created-By: Maven Integration for Eclipse
+
