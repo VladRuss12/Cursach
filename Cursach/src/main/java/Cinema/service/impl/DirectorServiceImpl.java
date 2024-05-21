@@ -5,79 +5,105 @@ import Cinema.entity.Movie;
 import Cinema.repository.DirectorRepository;
 import Cinema.repository.MovieRepository;
 import Cinema.service.DirectorService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Service
-public class DirectorServiceImpl extends PersonServiceImpl<Director> implements DirectorService {
+public class DirectorServiceImpl implements DirectorService {
 
-    private DirectorRepository directorRepository;
-    private MovieRepository movieRepository;
+    private final DirectorRepository directorRepository;
+    private final MovieRepository movieRepository;
 
     @Autowired
     public DirectorServiceImpl(DirectorRepository directorRepository, MovieRepository movieRepository) {
-        super(directorRepository);
         this.directorRepository = directorRepository;
         this.movieRepository = movieRepository;
     }
+
     @Override
+    public Director read(Long id) {
+        return directorRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Director with id " + id + " not found"));
+    }
+
+    @Override
+    public List<Director> read() {
+        return directorRepository.findAll();
+    }
+
+    @Override
+    @Transactional
     public void save(Director director) {
-        List<Movie> movies = director.getMovies();
-        for (Movie movie : movies) {
-            if (!movie.getDirector().equals(director)) {
-                movie.setDirector(director);
-            }
-            movieRepository.save(movie);
+        // Сохраняем режиссера
+        Director savedDirector = directorRepository.save(director);
+
+        // Сохраняем фильмы режиссера
+        for (Movie movie : director.getMovies()) {
+            movie.setDirector(savedDirector);
         }
+        movieRepository.saveAll(director.getMovies());
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        Director director = directorRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Director with id " + id + " not found"));
+
+        // Удаляем связи с фильмами
+        for (Movie movie : director.getMovies()) {
+            movie.setDirector(null);
+        }
+        movieRepository.saveAll(director.getMovies());
+
+        // Удаляем фильмы
+        movieRepository.deleteAll(director.getMovies());
+
+        // Удаляем режиссера
+        directorRepository.delete(director);
+    }
+
+    @Override
+    @Transactional
+    public void edit(Director updatedDirector) {
+        Director director = directorRepository.findById(updatedDirector.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Director with id " + updatedDirector.getId() + " not found"));
+
+        // Обновляем информацию о режиссере
+        director.setName(updatedDirector.getName());
+        director.setDateOfBirth(updatedDirector.getDateOfBirth());
+        director.setGender(updatedDirector.getGender());
+        director.setBiography(updatedDirector.getBiography());
+
+        // Обновляем связи с фильмами
+        for (Movie movie : director.getMovies()) {
+            movie.setDirector(director);
+        }
+        movieRepository.saveAll(director.getMovies());
+
+        // Сохраняем обновленного режиссера
         directorRepository.save(director);
     }
 
     @Override
-    public void delete(Long id) {
-        // Проверяем, существует ли режиссер с данным ID
-        Optional<Director> directorOptional = directorRepository.findById(id);
-        if (directorOptional.isPresent()) {
-            Director director = directorOptional.get();
-            List<Movie> movies = director.getMovies();
-            // Удаляем режиссера из каждого фильма
-            for (Movie movie : movies) {
-                if (movie.getDirector().equals(director)) {
-                    movie.setDirector(null);
-                }
-                movieRepository.save(movie);
-            }
-            // Удаляем режиссера из репозитория
-            directorRepository.deleteById(id);
-        } else {
-            // Если режиссера с таким ID не существует, можно выбросить исключение или обработать эту ситуацию
-            throw new EntityNotFoundException("Director with id " + id + " not found");
-        }
+    public List<Director> findByName(String name) {
+        return directorRepository.findByName(name);
     }
 
     @Override
-    public void edit(Director director) {
-        Director existingDirector = directorRepository.findById(director.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Director with id " + director.getId() + " not found"));
-        existingDirector.setName(director.getName());
-        existingDirector.setDateOfBirth(director.getDateOfBirth());
-        existingDirector.setGender(director.getGender());
-        existingDirector.setBiography(director.getBiography());
-        // Обновление специфичных для Director полей
-        directorRepository.save(existingDirector);
-
-        // Вызов метода edit из суперкласса для обновления общих полей Person
-        super.edit(director);
+    public List<Director> findByDateOfBirth(Date dateOfBirth) {
+        return directorRepository.findByDateOfBirth(dateOfBirth);
     }
 
     @Override
-    public List<Director> findByMovieTitle(String title) {
-        return directorRepository.findByMovieTitle(title);
+    public List<Director> findByGender(String gender) {
+        return directorRepository.findByGender(gender);
     }
-
-
-    // Дополнительные методы, если необходимо
 }

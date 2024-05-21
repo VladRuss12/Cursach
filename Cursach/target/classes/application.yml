@@ -1,24 +1,18 @@
 server:
-   port: 8088    
-   error:
-      whitelabel:
-         enabled: false    
+  port: 8088
 
 spring:
   datasource:
-    platform: MySQL
-    # driver-class-name: com.mysql.jdbc.Driver
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/university?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useLegacyDatetimeCode=false
+    url: jdbc:mysql://localhost:3306/cinema?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useLegacyDatetimeCode=false
     username: root
     password: zxzx
-  # JPA properties
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
-       ddl-auto: none # When you launch the application for the first time - switch "none" at "create update"
-    show-sql: false
+      ddl-auto: update
+    show-sql: true
     database: mysql
-    database-platform: org.hibernate.dialect.MySQL8Dialect
-    # database-platform: org.hibernate.dialect.MySQL55Dialect
-    #  open-in-view: false
+    database-platform: org.hibernate.dialect.MySQLDialect
     generate-ddl: true
+    open-in-view: true

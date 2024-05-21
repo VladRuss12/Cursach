@@ -1,42 +1,49 @@
 package Cinema.service.impl;
 
-import Cinema.entity.Actor;
-import Cinema.entity.Director;
-import Cinema.entity.Movie;
-import Cinema.entity.Review;
-import Cinema.entity.enums.GenreEnum;
+import Cinema.entity.*;
 import Cinema.exeption.ResourceNotFoundException;
-import Cinema.repository.ActorRepository;
 import Cinema.repository.DirectorRepository;
 import Cinema.repository.MovieRepository;
+import Cinema.repository.ReviewRepository;
 import Cinema.service.MovieService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityNotFoundException;
 import java.util.List;
 
 @Service
-public class MovieServiceImpl extends AbstractServiceImpl<Movie> implements MovieService {
-    private  ActorRepository actorRepository;
+public class MovieServiceImpl implements MovieService {
     private MovieRepository movieRepository;
+    private ReviewRepository reviewRepository;
     private DirectorRepository directorRepository;
 
+
     @Autowired
-    public MovieServiceImpl(MovieRepository movieRepository, DirectorRepository directorRepository, ActorRepository actorRepository) {
-        super(movieRepository);
+    public MovieServiceImpl(MovieRepository movieRepository, DirectorRepository directorRepository,ReviewRepository reviewRepository) {
         this.movieRepository = movieRepository;
         this.directorRepository = directorRepository;
-        this.actorRepository = actorRepository;
+        this.reviewRepository = reviewRepository;
     }
 
+    @Override
+    public Movie read(Long id) {
+        return movieRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Movie with id " + id + " not found"));
+    }
+
+    @Override
+    public List<Movie> read() {
+        return movieRepository.findAll();
+    }
     @Override
     public List<Movie> findByTitle(String title) {
         return movieRepository.findByTitle(title);
     }
 
     @Override
-    public List<Movie> findByGenre(GenreEnum genre) {
+    public List<Movie> findByGenre(String genre) {
         return movieRepository.findByGenre(genre);
     }
 
@@ -55,57 +62,103 @@ public class MovieServiceImpl extends AbstractServiceImpl<Movie> implements Movi
         return movieRepository.findByDirector(director);
     }
 
+    @Transactional
+    public void save(Movie movie) {
+        // Находим существующего режиссера по id
+        Director director = null;
+        if (movie.getDirector() != null) {
+            director = directorRepository.findById(movie.getDirector().getId()).orElse(null);
+        }
+        if (director != null) {
+            // Устанавливаем режиссера в фильме
+            movie.setDirector(director);
+        }
+
+        // Сохраняем фильм
+        Movie savedMovie = movieRepository.save(movie);
+
+        // Обновляем связь с режиссером
+        if (director != null) {
+            director.getMovies().add(savedMovie);
+            directorRepository.save(director);
+        }
+
+        if (movie.getReviews() != null) {
+            for (Review review : movie.getReviews()) {
+                review.setMovie(savedMovie);
+                reviewRepository.save(review);
+            }
+        }
+
+    }
+
+
+
     @Override
-    public void edit(Movie movie) {
-        Movie existingMovie = movieRepository.findById(movie.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Movie with id " + movie.getId() + " not found"));
+    @Transactional
+    public void delete(Long id) {
+        Movie movie = movieRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + id + " not found"));
 
-        // Обновляем информацию о фильме
-        existingMovie.setTitle(movie.getTitle());
-        existingMovie.setDescription(movie.getDescription());
-        existingMovie.setReleaseYear(movie.getReleaseYear());
-        existingMovie.setGenre(movie.getGenre());
-        existingMovie.setAvgRating(movie.getAvgRating());
+        // Удаляем связи с отзывами
+        for (Review review : movie.getReviews()) {
+            review.setMovie(null);
+        }
+        reviewRepository.saveAll(movie.getReviews());
 
-        // Обновляем информацию о режиссере, если она изменилась
-        if (!existingMovie.getDirector().equals(movie.getDirector())) {
-            Director oldDirector = existingMovie.getDirector();
-            oldDirector.getMovies().remove(existingMovie);
-            directorRepository.save(oldDirector);
-
-            existingMovie.setDirector(movie.getDirector());
-            movie.getDirector().getMovies().add(existingMovie);
+        // Удаляем связь с режиссером
+        Director director = movie.getDirector();
+        if (director != null) {
+            director.getMovies().remove(movie);
+            directorRepository.save(director);
         }
 
-        // Обновляем информацию об актерах
-        for (Actor actor : existingMovie.getActors()) {
-            if (!movie.getActors().contains(actor)) {
-                actor.getMovies().remove(existingMovie);
-                actorRepository.save(actor);
-            }
-        }
-        for (Actor actor : movie.getActors()) {
-            if (!existingMovie.getActors().contains(actor)) {
-                actor.getMovies().add(existingMovie);
-                actorRepository.save(actor);
-            }
-        }
-        existingMovie.setActors(movie.getActors());
-
-        movieRepository.save(existingMovie);
+        // Удаляем фильм
+        movieRepository.delete(movie);
     }
 
     @Override
-    public double calculateAverageRating(Long movieId) {
-        Movie movie = movieRepository.findById(movieId).orElse(null);
-        if (movie == null) {
-            throw new ResourceNotFoundException("Movie not found with id " + movieId);
+    @Transactional
+    public void edit(Movie updatedMovie) {
+        Movie movie = movieRepository.findById(updatedMovie.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + updatedMovie.getId() + " not found"));
+
+        // Обновляем информацию о фильме
+        movie.setTitle(updatedMovie.getTitle());
+        movie.setDescription(updatedMovie.getDescription());
+        movie.setReleaseYear(updatedMovie.getReleaseYear());
+        movie.setGenre(updatedMovie.getGenre());
+        movie.setAvgRating(updatedMovie.getAvgRating());
+
+        // Обновляем связь с режиссером, если она изменилась
+        Director newDirector = directorRepository.findById(updatedMovie.getDirector().getId()).orElse(null);
+        Director oldDirector = movie.getDirector();
+        if (newDirector != null && !newDirector.equals(oldDirector)) {
+            if (oldDirector != null) {
+                oldDirector.getMovies().remove(movie);
+                directorRepository.save(oldDirector);
+            }
+            movie.setDirector(newDirector);
+            newDirector.getMovies().add(movie);
+            directorRepository.save(newDirector);
         }
+
+        // Обновляем связи с отзывами
+        for (Review review : movie.getReviews()) {
+            review.setMovie(movie);
+        }
+        reviewRepository.saveAll(movie.getReviews());
+
+        // Сохраняем обновленный фильм
+        movieRepository.save(movie);
+    }
+
+
+    public double calculateAverageRating(Movie movie) {
         return movie.getReviews().stream()
                 .mapToInt(Review::getRating)
                 .average()
                 .orElse(0.0);
     }
-
     // Дополнительные методы, если необходимо
 }

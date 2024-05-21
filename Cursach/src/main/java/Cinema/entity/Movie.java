@@ -1,20 +1,20 @@
 package Cinema.entity;
 
-import javax.persistence.*;
-
-import Cinema.entity.enums.GenreEnum;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.*;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.util.List;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-@ToString()
-
+@EqualsAndHashCode(callSuper = true, of = {"title"})
+@ToString(callSuper = true)
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Entity
 @Table(name = "movies")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Movie extends AbstractEntity {
 
     @Column(name = "title")
@@ -26,23 +26,18 @@ public class Movie extends AbstractEntity {
     @Column(name = "release_year")
     private int releaseYear;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "genre")
-    private GenreEnum genre;
+    private String genre;
 
-    @Column(name = "avgRating")
-    private int avgRating;
+    //@Column(name = "avgRating")
+    private Double avgRating;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinColumn(name = "director_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "`director_id`", nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Director director;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "actors",
-            joinColumns = @JoinColumn(name = "movie_id"),
-            inverseJoinColumns = @JoinColumn(name = "actor_id"))
-    private List<Actor> actors;
-
-    @OneToMany(mappedBy = "movie")
+    @JsonManagedReference(value = "movie-review")
+    @OneToMany(mappedBy = "movie", cascade = CascadeType.ALL)
     private List<Review> reviews;
 }
