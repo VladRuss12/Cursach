@@ -1,14 +1,16 @@
 package Cinema.entity;
 
-import javax.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
+import lombok.*;
+
 
 @Data
 @EqualsAndHashCode(callSuper = true, of = {"comment", "rating"})
 @ToString(callSuper = true)
-
+@NoArgsConstructor
+@AllArgsConstructor
 @Entity
 @Table(name = "reviews")
 public class Review extends AbstractEntity {
@@ -20,9 +22,11 @@ public class Review extends AbstractEntity {
     private int rating;
 
     @ManyToOne
+    @JsonBackReference(value = "user-review")
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @JsonBackReference(value = "movie-review")
     @ManyToOne
     @JoinColumn(name = "movie_id", nullable = false)
     private Movie movie;

@@ -1,8 +1,8 @@
 server:
-   port: 8088    
-   error:
-      whitelabel:
-         enabled: false    
+  port: 8088
+  error:
+    whitelabel:
+      enabled: false
 
 spring:
   datasource:
@@ -15,7 +15,7 @@ spring:
   # JPA properties
   jpa:
     hibernate:
-       ddl-auto: none # When you launch the application for the first time - switch "none" at "create update"
+      ddl-auto: none # When you launch the application for the first time - switch "none" at "create update"
     show-sql: false
     database: mysql
     database-platform: org.hibernate.dialect.MySQL8Dialect

@@ -1,43 +1,19 @@
 package Cinema.entity;
 
-import Cinema.entity.enums.GenderEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
-import java.util.Date;
-
+import java.time.LocalDate;
 
 @Data
-
-@Entity
+@MappedSuperclass
 public abstract class Person extends AbstractEntity {
 
-    @Column(name = "name")
     private String name;
-
-    @Column(name = "dateOfBirth")
-    private Date dateOfBirth;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "gender")
-    private GenderEnum gender;
-
-    @Transient
-    private String firstname;
-
-    @Column(name = "surname")
-    private String surname;
-
-    public void setName(String name) {
-        this.name = name;
-        // Разделение имени на firstname и surname
-        String[] parts = name.split(" ");
-        if (parts.length > 1) {
-            this.firstname = parts[0];
-            this.surname = parts[1];
-        } else {
-            this.firstname = name;
-            this.surname = "";
-        }
-    }
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate dateOfBirth;
+    private String gender;
 }

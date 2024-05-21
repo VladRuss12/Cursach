@@ -2,15 +2,16 @@ package Cinema.controller;
 
 import Cinema.entity.Director;
 import Cinema.entity.Movie;
-import Cinema.entity.enums.GenreEnum;
 import Cinema.exeption.ResourceNotFoundException;
 import Cinema.service.DirectorService;
 import Cinema.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class MovieController extends AbstractController<Movie> {
         this.movieService = movieService;
         this.directorService = directorService;
     }
+
     @Override
     public MovieService getService() {
         return movieService;
@@ -41,7 +43,7 @@ public class MovieController extends AbstractController<Movie> {
     }
 
     @GetMapping("/genre/{genre}")
-    public ResponseEntity<List<Movie>> getMoviesByGenre(@PathVariable GenreEnum genre) {
+    public ResponseEntity<List<Movie>> getMoviesByGenre(@PathVariable String genre) {
         List<Movie> movies = movieService.findByGenre(genre);
         if (movies.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -49,7 +51,7 @@ public class MovieController extends AbstractController<Movie> {
         return new ResponseEntity<>(movies, headers, HttpStatus.OK);
     }
 
-@GetMapping("/year/{year}")
+    @GetMapping("/year/{year}")
     public ResponseEntity<List<Movie>> getMoviesByReleaseYear(@PathVariable int year) {
         List<Movie> movies = movieService.findByReleaseYear(year);
         if (movies.isEmpty()) {
@@ -80,15 +82,15 @@ public class MovieController extends AbstractController<Movie> {
         return new ResponseEntity<>(movies, headers, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}/averageRating")
-    public ResponseEntity<Double> getAverageRating(@PathVariable Long id) {
-        try {
-            double averageRating = movieService.calculateAverageRating(id);
-            return ResponseEntity.ok(averageRating);
-        } catch (ResourceNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
+//    @GetMapping("/{id}/averageRating")
+//    public ResponseEntity<Double> getAverageRating(@PathVariable Long id) {
+//        try {
+//            double averageRating = movieService.calculateAverageRating(id);
+//            return ResponseEntity.ok(averageRating);
+//        } catch (ResourceNotFoundException e) {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
 
 }
 
