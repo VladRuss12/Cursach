@@ -12,5 +12,6 @@ import java.util.List;
 
 @Repository
 public interface DirectorRepository extends PersonRepository<Director, Long> {
-
+    List<Director> findByName(String name);
+    List<Director> findByMovies(Movie movie);
 }

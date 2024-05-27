@@ -11,6 +11,7 @@ import Cinema.service.ReviewService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     public Review read(Long id) {
         return reviewRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Review with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Review with id " + id + " not found"));
     }
 
     @Override
@@ -45,39 +46,38 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional
     public void save(Review review) {
-        if (review.getUser() == null || review.getMovie() == null) {
-            throw new IllegalArgumentException("Review must be associated with a user and a movie");
+        // Получите текущего пользователя
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (review.getMovie() == null) {
+            throw new IllegalArgumentException("Review must be associated with a movie");
         }
 
-        // Сохраняем или обновляем пользователя и фильм
-        User user = userRepository.findById(review.getUser().getId())
-                .orElseThrow(() -> new EntityNotFoundException("User with id " + review.getUser().getId() + " not found"));
+        // Сохраняем или обновляем фильм
         Movie movie = movieRepository.findById(review.getMovie().getId())
-                .orElseThrow(() -> new EntityNotFoundException("Movie with id " + review.getMovie().getId() + " not found"));
-
-        if (user != null) {
-            user.getReviews().add(review);
-            userRepository.save(user);
-        }
-
-        if (movie != null) {
-            movie.getReviews().add(review);
-            movieRepository.save(movie);
-        }
+                .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + review.getMovie().getId() + " not found"));
 
         // Устанавливаем связи отзыва с пользователем и фильмом
-        review.setUser(user);
+        review.setUser(currentUser);
         review.setMovie(movie);
 
         // Сохраняем отзыв
         reviewRepository.save(review);
     }
 
+
+
     @Override
     @Transactional
     public void delete(Long id) {
+        User currentUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Review with id " + id + " not found"));
+
+        // Проверяем, является ли текущий пользователь автором отзыва
+        if (!review.getUser().equals(currentUser)) {
+            throw new IllegalArgumentException("You can only delete your own reviews");
+        }
 
         User user = review.getUser();
         Movie movie = review.getMovie();
@@ -105,9 +105,9 @@ public class ReviewServiceImpl implements ReviewService {
 
         // Обновляем связи отзыва с пользователем и фильмом
         User user = userRepository.findById(updatedReview.getUser().getId())
-                .orElseThrow(() -> new EntityNotFoundException("User with id " + updatedReview.getUser().getId() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User with id " + updatedReview.getUser().getId() + " not found"));
         Movie movie = movieRepository.findById(updatedReview.getMovie().getId())
-                .orElseThrow(() -> new EntityNotFoundException("Movie with id " + updatedReview.getMovie().getId() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + updatedReview.getMovie().getId() + " not found"));
 
         if (user != null) {
             user.getReviews().add(review);

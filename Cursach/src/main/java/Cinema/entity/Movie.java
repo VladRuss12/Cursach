@@ -2,6 +2,8 @@ package Cinema.entity;
 
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.*;
 
 import java.util.List;
@@ -28,9 +30,6 @@ public class Movie extends AbstractEntity {
 
     @Column(name = "genre")
     private String genre;
-
-    //@Column(name = "avgRating")
-    private Double avgRating;
 
     @ManyToOne
     @JoinColumn(name = "`director_id`", nullable = false)

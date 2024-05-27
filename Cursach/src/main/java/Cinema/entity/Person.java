@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
@@ -12,7 +13,6 @@ import java.time.LocalDate;
 @MappedSuperclass
 public abstract class Person extends AbstractEntity {
 
-    private String name;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;
     private String gender;

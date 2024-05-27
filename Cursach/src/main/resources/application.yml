@@ -2,12 +2,13 @@ server:
   port: 8088
 
 spring:
+  application:
+    name: security-security
   datasource:
     url: jdbc:mysql://localhost:3306/cinema?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useLegacyDatetimeCode=false
     username: root
     password: zxzx
     driver-class-name: com.mysql.cj.jdbc.Driver
-
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,3 +17,11 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     generate-ddl: true
     open-in-view: true
+    properties:
+      hibernate:
+        format_sql: true
+token:
+  signing:
+    key: 9B7D2C34A366BF4F7C4A2307B876D275A789FEDCBA9876543210ABCDEF123456
+
+

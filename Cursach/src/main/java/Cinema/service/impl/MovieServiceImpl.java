@@ -12,12 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 @Service
 public class MovieServiceImpl implements MovieService {
-    private MovieRepository movieRepository;
-    private ReviewRepository reviewRepository;
-    private DirectorRepository directorRepository;
+    private final MovieRepository movieRepository;
+    private final ReviewRepository reviewRepository;
+    private final DirectorRepository directorRepository;
 
 
     @Autowired
@@ -30,7 +32,18 @@ public class MovieServiceImpl implements MovieService {
     @Override
     public Movie read(Long id) {
         return movieRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Movie with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Movie with id " + id + " not found"));
+    }
+
+    @Override
+    public Movie findRandomMovie() {
+        List<Movie> allMovies = movieRepository.findAll();
+        if (allMovies.isEmpty()) {
+            throw new ResourceNotFoundException("No movies found");
+        }
+        Random random = new Random();
+        int randomIndex = random.nextInt(allMovies.size());
+        return allMovies.get(randomIndex);
     }
 
     @Override
@@ -53,8 +66,16 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    public List<Movie> findByAvgRatingGreaterThan(int rating) {
-        return movieRepository.findByAvgRatingGreaterThan(rating);
+    public List<Movie> findByAvgRatingGreaterThan(double rating) {
+        // Получаем все фильмы
+        List<Movie> allMovies = movieRepository.findAll();
+
+        // Фильтруем фильмы, у которых средний рейтинг больше указанного значения
+        List<Movie> filteredMovies = allMovies.stream()
+                .filter(movie -> calculateAverageRating(movie) >= rating)
+                .collect(Collectors.toList());
+
+        return filteredMovies;
     }
 
     @Override
@@ -76,20 +97,13 @@ public class MovieServiceImpl implements MovieService {
 
         // Сохраняем фильм
         Movie savedMovie = movieRepository.save(movie);
+        movieRepository.save(savedMovie);
 
         // Обновляем связь с режиссером
         if (director != null) {
             director.getMovies().add(savedMovie);
             directorRepository.save(director);
         }
-
-        if (movie.getReviews() != null) {
-            for (Review review : movie.getReviews()) {
-                review.setMovie(savedMovie);
-                reviewRepository.save(review);
-            }
-        }
-
     }
 
 
@@ -128,7 +142,6 @@ public class MovieServiceImpl implements MovieService {
         movie.setDescription(updatedMovie.getDescription());
         movie.setReleaseYear(updatedMovie.getReleaseYear());
         movie.setGenre(updatedMovie.getGenre());
-        movie.setAvgRating(updatedMovie.getAvgRating());
 
         // Обновляем связь с режиссером, если она изменилась
         Director newDirector = directorRepository.findById(updatedMovie.getDirector().getId()).orElse(null);
@@ -160,5 +173,4 @@ public class MovieServiceImpl implements MovieService {
                 .average()
                 .orElse(0.0);
     }
-    // Дополнительные методы, если необходимо
 }
