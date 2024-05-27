@@ -2,7 +2,6 @@ package Cinema.controller;
 
 import Cinema.entity.Director;
 import Cinema.entity.Movie;
-import Cinema.exeption.ResourceNotFoundException;
 import Cinema.service.DirectorService;
 import Cinema.service.MovieService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,15 +81,25 @@ public class MovieController extends AbstractController<Movie> {
         return new ResponseEntity<>(movies, headers, HttpStatus.OK);
     }
 
-//    @GetMapping("/{id}/averageRating")
-//    public ResponseEntity<Double> getAverageRating(@PathVariable Long id) {
-//        try {
-//            double averageRating = movieService.calculateAverageRating(id);
-//            return ResponseEntity.ok(averageRating);
-//        } catch (ResourceNotFoundException e) {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
+    @GetMapping("/{id}/average-rating")
+    public ResponseEntity<Double> getAverageRating(@PathVariable Long id) {
+        Movie movie = movieService.read(id);
+        if (movie == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        double averageRating = movieService.calculateAverageRating(movie);
+        return new ResponseEntity<>(averageRating, HttpStatus.OK);
+    }
+
+    @GetMapping("/random")
+    public ResponseEntity<Movie> getRandomMovie() {
+        Movie movie = movieService.findRandomMovie();
+        if (movie == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(movie, headers, HttpStatus.OK);
+    }
+
 
 }
 

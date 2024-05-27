@@ -2,6 +2,7 @@ package Cinema.service.impl;
 
 import Cinema.entity.Director;
 import Cinema.entity.Movie;
+import Cinema.exeption.ResourceNotFoundException;
 import Cinema.repository.DirectorRepository;
 import Cinema.repository.MovieRepository;
 import Cinema.service.DirectorService;
@@ -30,7 +31,7 @@ public class DirectorServiceImpl implements DirectorService {
     @Override
     public Director read(Long id) {
         return directorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Director with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Director with id " + id + " not found"));
     }
 
     @Override
@@ -44,18 +45,13 @@ public class DirectorServiceImpl implements DirectorService {
         // Сохраняем режиссера
         Director savedDirector = directorRepository.save(director);
 
-        // Сохраняем фильмы режиссера
-        for (Movie movie : director.getMovies()) {
-            movie.setDirector(savedDirector);
-        }
-        movieRepository.saveAll(director.getMovies());
     }
 
     @Override
     @Transactional
     public void delete(Long id) {
         Director director = directorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Director with id " + id + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Director with id " + id + " not found"));
 
         // Удаляем связи с фильмами
         for (Movie movie : director.getMovies()) {
@@ -74,7 +70,7 @@ public class DirectorServiceImpl implements DirectorService {
     @Transactional
     public void edit(Director updatedDirector) {
         Director director = directorRepository.findById(updatedDirector.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Director with id " + updatedDirector.getId() + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Director with id " + updatedDirector.getId() + " not found"));
 
         // Обновляем информацию о режиссере
         director.setName(updatedDirector.getName());
@@ -105,5 +101,10 @@ public class DirectorServiceImpl implements DirectorService {
     @Override
     public List<Director> findByGender(String gender) {
         return directorRepository.findByGender(gender);
+    }
+
+    @Override
+    public List<Director> findByMovie(Movie movie) {
+        return directorRepository.findByMovies(movie);
     }
 }

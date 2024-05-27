@@ -20,7 +20,7 @@ public abstract class AbstractController<T extends AbstractEntity> {
         headers.setContentType(MediaType.APPLICATION_JSON);
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<T>> get() {
         List<T> entities = getService().read();
         if (entities.isEmpty()) {

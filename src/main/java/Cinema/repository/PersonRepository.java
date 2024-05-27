@@ -11,8 +11,6 @@ import java.util.Optional;
 
 @NoRepositoryBean
 public interface PersonRepository<T extends Person, ID extends Long> extends JpaRepository<T, ID> {
-
-    List<T> findByName(String name);
     List<T> findByDateOfBirth(Date dateOfBirth);
     List<T> findByGender(String gender);
 }

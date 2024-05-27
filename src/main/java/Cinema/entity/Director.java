@@ -20,6 +20,10 @@ public class Director extends Person {
     @Column(name = "biography")
     private String biography;
 
+    @Column(name = "name")
+    private String name;
+
+    @JsonIgnore
     @OneToMany(fetch = FetchType.EAGER, mappedBy = "director", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Movie> movies;
 }
