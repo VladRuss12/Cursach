@@ -77,6 +77,7 @@ public class DirectorServiceImpl implements DirectorService {
         director.setDateOfBirth(updatedDirector.getDateOfBirth());
         director.setGender(updatedDirector.getGender());
         director.setBiography(updatedDirector.getBiography());
+        director.setInterestingFact(updatedDirector.getInterestingFact());
 
         // Обновляем связи с фильмами
         for (Movie movie : director.getMovies()) {
