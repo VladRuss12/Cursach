@@ -20,6 +20,10 @@ public class Director extends Person {
     @Column(name = "biography")
     private String biography;
 
+    
+    @Column(name = "interesting_fact")
+    private String interestingFact;
+
     @Column(name = "name")
     private String name;
 
